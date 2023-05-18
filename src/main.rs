@@ -3,7 +3,7 @@
 
 mod vga_buffer;
 
-use core::{fmt::Write, panic::PanicInfo};
+use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -12,6 +12,6 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    vga_buffer::WRITER.lock().write_str("Hello again").unwrap();
+    println!("5 + 3 = {}", 5 + 3);
     loop {}
 }
