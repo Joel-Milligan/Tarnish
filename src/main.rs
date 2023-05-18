@@ -62,11 +62,6 @@ pub extern "C" fn _start() -> ! {
     loop {}
 }
 
-#[test_case]
-fn trivial_assertion() {
-    assert_eq!(1, 1);
-}
-
 pub trait Testable {
     fn run(&self) -> ();
 }
