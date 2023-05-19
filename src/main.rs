@@ -11,9 +11,14 @@ use rust_os::println;
 pub extern "C" fn _start() -> ! {
     println!("5 + 3 = {}", 5 + 3);
 
+    rust_os::init();
+
+    x86_64::instructions::interrupts::int3();
+
     #[cfg(test)]
     test_main();
 
+    println!("It didn't crash!");
     loop {}
 }
 
