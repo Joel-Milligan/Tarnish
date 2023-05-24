@@ -77,14 +77,14 @@ pub fn init() {
 }
 
 #[cfg(test)]
-use bootloader::{entry_point, BootInfo};
+use bootloader_api::{entry_point, BootInfo};
 
 #[cfg(test)]
 entry_point!(test_kernel_main);
 
 /// Entry point for `cargo test`
 #[cfg(test)]
-fn test_kernel_main(_boot_info: &'static BootInfo) -> ! {
+fn test_kernel_main(_boot_info: &'static mut BootInfo) -> ! {
     init();
     test_main();
     hlt_loop();
