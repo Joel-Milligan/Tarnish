@@ -9,11 +9,12 @@
 extern crate alloc;
 
 pub mod allocator;
+pub mod framebuffer;
 pub mod gdt;
 pub mod interrupts;
+pub mod logger;
 pub mod memory;
 pub mod serial;
-pub mod vga_buffer;
 
 use core::panic::PanicInfo;
 
@@ -48,14 +49,14 @@ where
     T: Fn(),
 {
     fn run(&self) {
-        serial_print!("{}...\t", core::any::type_name::<T>());
+        log::info!("{}...\t", core::any::type_name::<T>());
         self();
-        serial_println!("[ok]");
+        log::info!("[ok]");
     }
 }
 
 pub fn test_runner(tests: &[&dyn Testable]) {
-    serial_println!("Running {} tests", tests.len());
+    log::info!("Running {} tests", tests.len());
     for test in tests {
         test.run();
     }
@@ -63,10 +64,29 @@ pub fn test_runner(tests: &[&dyn Testable]) {
 }
 
 pub fn test_panic_handler(info: &PanicInfo) -> ! {
-    serial_println!("[failed]\n");
-    serial_println!("Error: {}\n", info);
+    log::error!("[failed]\n");
+    log::error!("Error: {}\n", info);
     exit_qemu(QemuExitCode::Failed);
     hlt_loop();
+}
+
+pub fn init_logger(
+    framebuffer: &'static mut [u8],
+    info: FrameBufferInfo,
+    frame_buffer_logger_status: bool,
+    serial_logger_status: bool,
+) {
+    let logger = logger::LOGGER.get_or_init(move || {
+        logger::LockedLogger::new(
+            framebuffer,
+            info,
+            frame_buffer_logger_status,
+            serial_logger_status,
+        )
+    });
+    log::set_logger(logger).expect("logger already set");
+    log::set_max_level(LevelFilter::Trace);
+    log::info!("Framebuffer info: {:?}", info);
 }
 
 pub fn init() {
@@ -76,8 +96,10 @@ pub fn init() {
     x86_64::instructions::interrupts::enable();
 }
 
+use bootloader_api::info::FrameBufferInfo;
 #[cfg(test)]
 use bootloader_api::{entry_point, BootInfo};
+use log::LevelFilter;
 
 #[cfg(test)]
 entry_point!(test_kernel_main);

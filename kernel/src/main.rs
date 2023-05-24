@@ -13,8 +13,8 @@ use alloc::vec::Vec;
 use bootloader_api::config::Mapping;
 use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
 use core::panic::PanicInfo;
+use kernel::allocator;
 use kernel::memory::{self, BootInfoFrameAllocator};
-use kernel::{allocator, println};
 use x86_64::VirtAddr;
 
 pub static BOOTLOADER_CONFIG: BootloaderConfig = {
@@ -36,24 +36,24 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     // allocate a number on the heap
     let heap_value = Box::new(41);
-    println!("heap_value at {:p}", heap_value);
+    log::info!("heap_value at {:p}", heap_value);
 
     // create a dynamically sized vector
     let mut vec = Vec::new();
     for i in 0..500 {
         vec.push(i);
     }
-    println!("vec at {:p}", vec.as_slice());
+    log::info!("vec at {:p}", vec.as_slice());
 
     // create a reference counted vector -> will be freed when count reaches 0
     let reference_counted = Rc::new(vec![1, 2, 3]);
     let cloned_reference = reference_counted.clone();
-    println!(
+    log::info!(
         "current reference count is {}",
         Rc::strong_count(&cloned_reference)
     );
     core::mem::drop(reference_counted);
-    println!(
+    log::info!(
         "reference count is {} now",
         Rc::strong_count(&cloned_reference)
     );
@@ -61,14 +61,14 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     #[cfg(test)]
     test_main();
 
-    println!("It didn't crash!");
+    log::info!("It didn't crash!");
     kernel::hlt_loop();
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
+    log::info!("{}", info);
     kernel::hlt_loop();
 }
 

@@ -33,7 +33,21 @@ x86_64 = "0.14.2"
 uart_16550 = "0.2.0"
 pic8259 = "0.10.4"
 pc-keyboard = "0.5.0"
+conquer-once = { version = "0.3.2", default-features = false }
+spinning_top = "0.2.4"
+log = "0.4.17"
 
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
+
+[dependencies.noto-sans-mono-bitmap]
+version = "0.2.0"
+default-features = false
+features = [
+    "regular",
+    "size_16",
+    "unicode-basic-latin",
+    # required for the fallback char '�'
+    "unicode-specials",
+]
