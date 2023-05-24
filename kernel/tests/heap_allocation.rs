@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(rust_os::test_runner)]
+#![test_runner(kernel::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 extern crate alloc;
@@ -10,15 +10,15 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use bootloader_api::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use rust_os::allocator::HEAP_SIZE;
-use rust_os::memory::{self, BootInfoFrameAllocator};
-use rust_os::{allocator, hlt_loop};
+use kernel::allocator::HEAP_SIZE;
+use kernel::memory::{self, BootInfoFrameAllocator};
+use kernel::{allocator, hlt_loop};
 use x86_64::VirtAddr;
 
 entry_point!(main);
 
 fn main(boot_info: &'static mut BootInfo) -> ! {
-    rust_os::init();
+    kernel::init();
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
     let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_regions) };
@@ -30,7 +30,7 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    rust_os::test_panic_handler(info)
+    kernel::test_panic_handler(info)
 }
 
 #[test_case]
