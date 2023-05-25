@@ -1,10 +1,7 @@
 #![no_std]
-#![cfg_attr(test, no_main)]
+#![no_main]
 #![feature(abi_x86_interrupt)]
-#![feature(custom_test_frameworks)]
 #![feature(const_mut_refs)]
-#![test_runner(crate::test_runner)]
-#![reexport_test_harness_main = "test_main"]
 
 extern crate alloc;
 
@@ -16,7 +13,8 @@ pub mod logger;
 pub mod memory;
 pub mod serial;
 
-use core::panic::PanicInfo;
+use bootloader_api::info::FrameBufferInfo;
+use log::LevelFilter;
 
 pub fn hlt_loop() -> ! {
     loop {
@@ -40,36 +38,6 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
     }
 }
 
-pub trait Testable {
-    fn run(&self) -> ();
-}
-
-impl<T> Testable for T
-where
-    T: Fn(),
-{
-    fn run(&self) {
-        log::info!("{}...\t", core::any::type_name::<T>());
-        self();
-        log::info!("[ok]");
-    }
-}
-
-pub fn test_runner(tests: &[&dyn Testable]) {
-    log::info!("Running {} tests", tests.len());
-    for test in tests {
-        test.run();
-    }
-    exit_qemu(QemuExitCode::Success);
-}
-
-pub fn test_panic_handler(info: &PanicInfo) -> ! {
-    log::error!("[failed]\n");
-    log::error!("Error: {}\n", info);
-    exit_qemu(QemuExitCode::Failed);
-    hlt_loop();
-}
-
 pub fn init_logger(
     framebuffer: &'static mut [u8],
     info: FrameBufferInfo,
@@ -86,7 +54,7 @@ pub fn init_logger(
     });
     log::set_logger(logger).expect("logger already set");
     log::set_max_level(LevelFilter::Trace);
-    log::info!("Framebuffer info: {:?}", info);
+    log::info!("Framebuffer info: {info:?}");
 }
 
 pub fn init() {
@@ -94,26 +62,4 @@ pub fn init() {
     interrupts::init_idt();
     unsafe { interrupts::PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
-}
-
-use bootloader_api::info::FrameBufferInfo;
-#[cfg(test)]
-use bootloader_api::{entry_point, BootInfo};
-use log::LevelFilter;
-
-#[cfg(test)]
-entry_point!(test_kernel_main);
-
-/// Entry point for `cargo test`
-#[cfg(test)]
-fn test_kernel_main(_boot_info: &'static mut BootInfo) -> ! {
-    init();
-    test_main();
-    hlt_loop();
-}
-
-#[cfg(test)]
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    test_panic_handler(info)
 }

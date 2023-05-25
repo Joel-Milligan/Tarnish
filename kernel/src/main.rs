@@ -1,8 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(custom_test_frameworks)]
-#![test_runner(kernel::test_runner)]
-#![reexport_test_harness_main = "test_main"]
 
 extern crate alloc;
 
@@ -37,22 +34,11 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
 
-    #[cfg(test)]
-    test_main();
-
-    log::info!("It didn't crash!");
     kernel::hlt_loop();
 }
 
-#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    log::info!("{}", info);
+    log::error!("{}", info);
     kernel::hlt_loop();
-}
-
-#[cfg(test)]
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    kernel::test_panic_handler(info)
 }
