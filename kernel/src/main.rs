@@ -13,8 +13,8 @@ use alloc::vec::Vec;
 use bootloader_api::config::Mapping;
 use bootloader_api::{entry_point, BootInfo, BootloaderConfig};
 use core::panic::PanicInfo;
-use kernel::allocator;
 use kernel::memory::{self, BootInfoFrameAllocator};
+use kernel::{allocator, init_logger};
 use x86_64::VirtAddr;
 
 pub static BOOTLOADER_CONFIG: BootloaderConfig = {
@@ -26,6 +26,13 @@ pub static BOOTLOADER_CONFIG: BootloaderConfig = {
 entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
+    if let Some(framebuffer) = boot_info.framebuffer.as_mut() {
+        let info = framebuffer.info().clone();
+        let buffer = framebuffer.buffer_mut();
+
+        init_logger(buffer, info, true, false);
+    }
+
     kernel::init();
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
