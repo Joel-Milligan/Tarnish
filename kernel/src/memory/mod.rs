@@ -1,6 +1,6 @@
-use bootloader_api::info::{MemoryRegionKind, MemoryRegions};
+use bootloader_api::info::{MemoryRegionKind, MemoryRegions, Optional};
 use x86_64::registers::control::Cr3;
-use x86_64::structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
+use x86_64::structures::paging::{self, OffsetPageTable, PageTable, PhysFrame, Size4KiB};
 use x86_64::{PhysAddr, VirtAddr};
 
 pub mod allocator;
@@ -11,9 +11,10 @@ pub mod allocator;
 /// complete physical memory is mapped to virtual memory at the passed
 /// `physical_memory_offset`. Also, this function must be only called once
 /// to avoid aliasing `&mut` references (which is undefined behavior).
-pub unsafe fn init(physical_memory_offset: VirtAddr) -> OffsetPageTable<'static> {
-    let level_4_table = active_level_4_table(physical_memory_offset);
-    OffsetPageTable::new(level_4_table, physical_memory_offset)
+pub unsafe fn init_paging(physical_memory_offset: Optional<u64>) -> OffsetPageTable<'static> {
+    let phys_mem_offset = VirtAddr::new(physical_memory_offset.into_option().unwrap());
+    let level_4_table = active_level_4_table(phys_mem_offset);
+    OffsetPageTable::new(level_4_table, phys_mem_offset)
 }
 
 /// Returns a mutable reference to the active level 4 table.
@@ -61,7 +62,7 @@ impl BootInfoFrameAllocator {
     }
 }
 
-unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
+unsafe impl paging::FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
         let frame = self.usable_frames().nth(self.next);
         self.next += 1;

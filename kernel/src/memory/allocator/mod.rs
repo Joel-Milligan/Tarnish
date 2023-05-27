@@ -2,11 +2,15 @@ pub mod bump;
 pub mod fixed_size_block;
 pub mod linked_list;
 
+use bootloader_api::info::{MemoryRegions, Optional};
+use bootloader_api::BootInfo;
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::{FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB};
 use x86_64::VirtAddr;
 
 use self::fixed_size_block::FixedSizeBlockAllocator;
+
+use super::BootInfoFrameAllocator;
 
 #[global_allocator]
 static ALLOCATOR: Locked<FixedSizeBlockAllocator> = Locked::new(FixedSizeBlockAllocator::new());
@@ -15,9 +19,12 @@ pub const HEAP_START: usize = 0x4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 pub fn init_heap(
-    mapper: &mut impl Mapper<Size4KiB>,
-    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+    physical_memory_offset: Optional<u64>,
+    memory_regions: &'static MemoryRegions,
 ) -> Result<(), MapToError<Size4KiB>> {
+    let mut mapper = unsafe { super::init_paging(physical_memory_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(memory_regions) };
+
     let page_range = {
         let heap_start = VirtAddr::new(HEAP_START as u64);
         let heap_end = heap_start + HEAP_SIZE - 1u64;
@@ -31,7 +38,11 @@ pub fn init_heap(
             .allocate_frame()
             .ok_or(MapToError::FrameAllocationFailed)?;
         let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-        unsafe { mapper.map_to(page, frame, flags, frame_allocator)?.flush() };
+        unsafe {
+            mapper
+                .map_to(page, frame, flags, &mut frame_allocator)?
+                .flush()
+        };
     }
 
     unsafe { ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE) };

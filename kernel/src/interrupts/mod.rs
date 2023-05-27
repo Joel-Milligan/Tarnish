@@ -7,5 +7,11 @@ mod page_fault;
 mod pic;
 mod timer_interrupt;
 
-pub use idt::init_idt;
-pub use pic::PICS;
+use idt::init_idt;
+use pic::PICS;
+
+pub fn init() {
+    init_idt();
+    unsafe { PICS.lock().initialize() };
+    x86_64::instructions::interrupts::enable();
+}
