@@ -13,8 +13,10 @@ pub mod logger;
 pub mod memory;
 pub mod serial;
 
-use bootloader_api::info::FrameBufferInfo;
+use bootloader_api::{info::FrameBufferInfo, BootInfo};
 use log::LevelFilter;
+use memory::BootInfoFrameAllocator;
+use x86_64::VirtAddr;
 
 pub fn hlt_loop() -> ! {
     loop {
@@ -57,7 +59,19 @@ pub fn init_logger(
     log::info!("Framebuffer info: {info:?}");
 }
 
-pub fn init() {
+pub fn init(boot_info: &'static mut BootInfo) {
+    if let Some(framebuffer) = boot_info.framebuffer.as_mut() {
+        let info = framebuffer.info().clone();
+        let buffer = framebuffer.buffer_mut();
+
+        init_logger(buffer, info, true, false);
+    }
+
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_regions) };
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+
     gdt::init();
     interrupts::init_idt();
     unsafe { interrupts::PICS.lock().initialize() };
