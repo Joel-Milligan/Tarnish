@@ -1,9 +1,15 @@
-use crate::framebuffer::FrameBufferWriter;
-use crate::serial::SerialPort;
-use bootloader_api::info::FrameBufferInfo;
+mod framebuffer;
+mod serial;
+
+use bootloader_api::info::{FrameBuffer, FrameBufferInfo, Optional};
 use conquer_once::spin::OnceCell;
 use core::fmt::Write;
 use spinning_top::Spinlock;
+
+use crate::init_logger;
+
+use self::framebuffer::FrameBufferWriter;
+use self::serial::SerialPort;
 
 /// The global logger instance used for the `log` crate.
 pub static LOGGER: OnceCell<LockedLogger> = OnceCell::uninit();
@@ -69,4 +75,13 @@ impl log::Log for LockedLogger {
     }
 
     fn flush(&self) {}
+}
+
+pub fn init(framebuffer: &'static mut Optional<FrameBuffer>) {
+    if let Some(framebuffer) = framebuffer.as_mut() {
+        let info = framebuffer.info().clone();
+        let buffer = framebuffer.buffer_mut();
+
+        init_logger(buffer, info, true, false);
+    }
 }
