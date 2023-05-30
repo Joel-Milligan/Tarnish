@@ -34,7 +34,6 @@ uart_16550 = "0.2"
 pic8259 = "0.10"
 pc-keyboard = "0.7"
 conquer-once = { version = "0.4", default-features = false }
-spinning_top = "0.2"
 log = "0.4"
 
 [dependencies.lazy_static]

@@ -3,6 +3,7 @@ pub mod fixed_size_block;
 pub mod linked_list;
 
 use bootloader_api::info::{MemoryRegions, Optional};
+use spin::{Mutex, MutexGuard};
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::{FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB};
 use x86_64::VirtAddr;
@@ -51,17 +52,17 @@ pub fn init_heap(
 
 /// A wrapper around spin::Mutex to permit trait implementations.
 pub struct Locked<A> {
-    inner: spin::Mutex<A>,
+    inner: Mutex<A>,
 }
 
 impl<A> Locked<A> {
     pub const fn new(inner: A) -> Self {
         Locked {
-            inner: spin::Mutex::new(inner),
+            inner: Mutex::new(inner),
         }
     }
 
-    pub fn lock(&self) -> spin::MutexGuard<A> {
+    pub fn lock(&self) -> MutexGuard<A> {
         self.inner.lock()
     }
 }

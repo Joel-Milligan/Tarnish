@@ -4,7 +4,7 @@ mod serial;
 use bootloader_api::info::{FrameBuffer, FrameBufferInfo, Optional};
 use conquer_once::spin::OnceCell;
 use core::fmt::Write;
-use spinning_top::Spinlock;
+use spin::Mutex;
 
 use crate::init_logger;
 
@@ -16,8 +16,8 @@ pub static LOGGER: OnceCell<LockedLogger> = OnceCell::uninit();
 
 /// A logger instance protected by a spinlock.
 pub struct LockedLogger {
-    framebuffer: Option<Spinlock<FrameBufferWriter>>,
-    serial: Option<Spinlock<SerialPort>>,
+    framebuffer: Option<Mutex<FrameBufferWriter>>,
+    serial: Option<Mutex<SerialPort>>,
 }
 
 impl LockedLogger {
@@ -29,12 +29,12 @@ impl LockedLogger {
         serial_logger_status: bool,
     ) -> Self {
         let framebuffer = match frame_buffer_logger_status {
-            true => Some(Spinlock::new(FrameBufferWriter::new(framebuffer, info))),
+            true => Some(Mutex::new(FrameBufferWriter::new(framebuffer, info))),
             false => None,
         };
 
         let serial = match serial_logger_status {
-            true => Some(Spinlock::new(unsafe { SerialPort::init() })),
+            true => Some(Mutex::new(unsafe { SerialPort::init() })),
             false => None,
         };
 
