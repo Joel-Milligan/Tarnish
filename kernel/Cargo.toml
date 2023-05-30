@@ -27,22 +27,22 @@ bench = false
 
 [dependencies]
 bootloader_api = "0.11"
-volatile = "0.2.6"
-spin = "0.5.2"
-x86_64 = "0.14.2"
-uart_16550 = "0.2.0"
-pic8259 = "0.10.4"
-pc-keyboard = "0.5.0"
-conquer-once = { version = "0.3.2", default-features = false }
-spinning_top = "0.2.4"
-log = "0.4.17"
+volatile = "0.4"
+spin = "0.9"
+x86_64 = "0.14"
+uart_16550 = "0.2"
+pic8259 = "0.10"
+pc-keyboard = "0.7"
+conquer-once = { version = "0.4", default-features = false }
+spinning_top = "0.2"
+log = "0.4"
 
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
 
 [dependencies.noto-sans-mono-bitmap]
-version = "0.2.0"
+version = "0.2"
 default-features = false
 features = [
     "regular",

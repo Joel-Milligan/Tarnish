@@ -10,8 +10,11 @@ use crate::interrupts::pic::PICS;
 
 pub extern "x86-interrupt" fn handler(_stack_frame: InterruptStackFrame) {
     lazy_static! {
-        static ref KEYBOARD: Mutex<Keyboard<Us104Key, ScancodeSet1>> =
-            Mutex::new(Keyboard::new(Us104Key, ScancodeSet1, HandleControl::Ignore));
+        static ref KEYBOARD: Mutex<Keyboard<Us104Key, ScancodeSet1>> = Mutex::new(Keyboard::new(
+            ScancodeSet1::new(),
+            Us104Key,
+            HandleControl::Ignore
+        ));
     }
 
     let mut keyboard = KEYBOARD.lock();
