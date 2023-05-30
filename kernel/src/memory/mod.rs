@@ -7,9 +7,11 @@ pub mod allocator;
 
 /// Initialize a new OffsetPageTable.
 ///
-/// This function is unsafe because the caller must guarantee that the
-/// complete physical memory is mapped to virtual memory at the passed
-/// `physical_memory_offset`. Also, this function must be only called once
+/// # Safety
+///
+/// Caller must guarantee that the complete physical memory is
+/// mapped to virtual memory at the passed `physical_memory_offset`.
+/// Also, this function must be only called once
 /// to avoid aliasing `&mut` references (which is undefined behavior).
 pub unsafe fn init_paging(physical_memory_offset: Optional<u64>) -> OffsetPageTable<'static> {
     let phys_mem_offset = VirtAddr::new(physical_memory_offset.into_option().unwrap());
@@ -41,8 +43,10 @@ pub struct BootInfoFrameAllocator {
 impl BootInfoFrameAllocator {
     /// Create a FrameAllocator from the passed memory map.
     ///
-    /// This function is unsafe because the caller must guarantee that the passed
-    /// memory map is valid. The main requirement is that all frames that are marked
+    /// # Safety
+    ///
+    /// The caller must guarantee that the passed memory map is valid.
+    /// The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.
     pub unsafe fn init(memory_regions: &'static MemoryRegions) -> Self {
         BootInfoFrameAllocator {

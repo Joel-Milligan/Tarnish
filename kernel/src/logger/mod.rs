@@ -79,7 +79,7 @@ impl log::Log for LockedLogger {
 
 pub fn init(framebuffer: &'static mut Optional<FrameBuffer>) {
     if let Some(framebuffer) = framebuffer.as_mut() {
-        let info = framebuffer.info().clone();
+        let info = framebuffer.info();
         let buffer = framebuffer.buffer_mut();
 
         init_logger(buffer, info, true, false);

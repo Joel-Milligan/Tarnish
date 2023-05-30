@@ -3,7 +3,6 @@ pub mod fixed_size_block;
 pub mod linked_list;
 
 use bootloader_api::info::{MemoryRegions, Optional};
-use bootloader_api::BootInfo;
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::{FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB};
 use x86_64::VirtAddr;
